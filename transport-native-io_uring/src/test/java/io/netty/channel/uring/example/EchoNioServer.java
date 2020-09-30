@@ -21,25 +21,23 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.uring.IOUringEventLoopGroup;
-import io.netty.channel.uring.IOUringServerSocketChannel;
-
-import java.util.concurrent.ThreadFactory;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 //temporary prototype example
-public class EchoIOUringServer {
-    private static final int PORT = Integer.parseInt(System.getProperty("port", "8081"));
+public class EchoNioServer {
+    private static final int PORT = Integer.parseInt(System.getProperty("port", "8088"));
 
     public static void main(String []args) {
-        EventLoopGroup bossGroup = new IOUringEventLoopGroup(1, (ThreadFactory) null, 0, false);
-        EventLoopGroup workerGroup = new IOUringEventLoopGroup(1, (ThreadFactory) null, 0, true);
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = new NioEventLoopGroup(1);
         final EchoServerHandler serverHandler = new EchoServerHandler();
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .option(ChannelOption.SO_REUSEADDR, true)
-                    .channel(IOUringServerSocketChannel.class)
+                    .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {

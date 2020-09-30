@@ -19,9 +19,8 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-//temporary prototype example
 @Sharable
-public class EchoIOUringServerHandler extends ChannelInboundHandlerAdapter {
+public class EchoServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -36,8 +35,19 @@ public class EchoIOUringServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         // Close the connection when an exception is raised.
-        cause.printStackTrace();
         ctx.close();
     }
 
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+        // Ensure we are not writing to fast by stop reading if we can not flush out data fast enough.
+        if (ctx.channel().isWritable()) {
+            ctx.channel().config().setAutoRead(true);
+        } else {
+            ctx.flush();
+            if (!ctx.channel().isWritable()) {
+                ctx.channel().config().setAutoRead(false);
+            }
+        }
+    }
 }
