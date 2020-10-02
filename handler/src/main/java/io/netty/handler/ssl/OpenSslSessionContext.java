@@ -65,8 +65,8 @@ public abstract class OpenSslSessionContext implements SSLSessionContext {
     final DefaultOpenSslSession newOpenSslSession(long sslSession, String peerHost,
                                             int peerPort, String protocol, String cipher,
                                             OpenSslJavaxX509Certificate[] peerCertificateChain, long creationTime) {
-        return sessionCache.newOpenSslSession(sslSession, this, peerHost, peerPort, protocol, cipher,
-                peerCertificateChain, creationTime);
+        return new DefaultOpenSslSession(this , peerHost, peerPort, sslSession, protocol, cipher,
+                peerCertificateChain, creationTime * 1000L, getSessionTimeout() * 1000L);
     }
 
     @Override
@@ -199,6 +199,13 @@ public abstract class OpenSslSessionContext implements SSLSessionContext {
      */
     public OpenSslSessionStats stats() {
         return stats;
+    }
+
+    /**
+     * Remove the given {@link OpenSslSession} from the cache, and so not re-use it for new connections.
+     */
+    final void removeFromCache(OpenSslSession session) {
+        sessionCache.removeSessionWithId(session.sessionId());
     }
 
     final void destroy() {

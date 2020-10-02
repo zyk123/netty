@@ -17,6 +17,7 @@ package io.netty.handler.ssl;
 
 import io.netty.internal.tcnative.SSLSession;
 import io.netty.util.AbstractReferenceCounted;
+import io.netty.util.IllegalReferenceCountException;
 import io.netty.util.ReferenceCounted;
 import io.netty.util.internal.EmptyArrays;
 import io.netty.util.internal.ObjectUtil;
@@ -30,6 +31,7 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 final class DefaultOpenSslSession extends AbstractReferenceCounted implements ReferenceCounted, OpenSslSession {
 
@@ -49,7 +51,7 @@ final class DefaultOpenSslSession extends AbstractReferenceCounted implements Re
     private volatile int packetBufferSize = ReferenceCountedOpenSslEngine.MAX_RECORD_SIZE;
     private volatile long lastAccessed;
     private volatile Certificate[] localCertificateChain;
-    private volatile boolean invalid;
+    private final AtomicBoolean invalid = new AtomicBoolean(false);
 
     // Guarded by synchronized(this)
     // lazy init for memory reasons
@@ -209,12 +211,19 @@ final class DefaultOpenSslSession extends AbstractReferenceCounted implements Re
 
     @Override
     public void invalidate() {
-        invalid = true;
+        if (invalid.compareAndSet(false, true)) {
+            sessionContext.removeFromCache(this);
+        }
     }
 
     @Override
     public boolean isValid() {
-        if (sslSession == -1 || invalid) {
+       return isValid(System.currentTimeMillis());
+    }
+
+    @Override
+    public boolean isValid(long now) {
+        if (sslSession == -1 || invalid.get()) {
             return false;
         }
 
@@ -223,8 +232,7 @@ final class DefaultOpenSslSession extends AbstractReferenceCounted implements Re
             return true;
         }
 
-        long current = System.currentTimeMillis();
-        return current - timeout < creationTime;
+        return now - timeout < creationTime;
     }
 
     @Override
@@ -315,6 +323,22 @@ final class DefaultOpenSslSession extends AbstractReferenceCounted implements Re
                 applicationBufferSize != ReferenceCountedOpenSslEngine.MAX_RECORD_SIZE) {
             applicationBufferSize = ReferenceCountedOpenSslEngine.MAX_RECORD_SIZE;
         }
+    }
+
+    @Override
+    public boolean upRef() {
+        if (sslSession == -1) {
+            return false;
+        }
+        if (refCnt() <= 0) {
+            throw new IllegalReferenceCountException();
+        }
+        return SSLSession.upRef(sslSession);
+    }
+
+    @Override
+    public boolean shouldBeSingleUse() {
+        return sslSession != -1 && SSLSession.shouldBeSingleUse(sslSession);
     }
 
     @Override

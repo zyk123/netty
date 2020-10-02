@@ -133,6 +133,11 @@ final class OpenSslNullSession implements OpenSslSession {
     }
 
     @Override
+    public boolean isValid(long now) {
+        return false;
+    }
+
+    @Override
     public Certificate[] getPeerCertificates() throws SSLPeerUnverifiedException {
         throw new SSLPeerUnverifiedException("NULL session");
     }
@@ -179,6 +184,16 @@ final class OpenSslNullSession implements OpenSslSession {
     @Override
     public int getApplicationBufferSize() {
         return ReferenceCountedOpenSslEngine.MAX_PLAINTEXT_LENGTH;
+    }
+
+    @Override
+    public boolean upRef() {
+        return true;
+    }
+
+    @Override
+    public boolean shouldBeSingleUse() {
+        return false;
     }
 
     @Override

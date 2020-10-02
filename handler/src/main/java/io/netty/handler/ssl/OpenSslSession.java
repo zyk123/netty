@@ -38,9 +38,25 @@ interface OpenSslSession extends SSLSession, ReferenceCounted {
     boolean isNullSession();
 
     /**
+     * Returns {@link true} if the session is still valid for the given current time, {@code false} otherwise.
+     */
+    boolean isValid(long now);
+
+    /**
      * Returns the native address (pointer) to {@code SSL_SESSION*} if any. Otherwise returns {@code -1}.
      */
     long nativeAddr();
+
+    /**
+     * Increment reference count of internal {@code SSL_SESSION*} and returns {@code true} if successful, {@code false}
+     * otherwise.
+     */
+    boolean upRef();
+
+    /**
+     * Returns {@code true} of this session should only be re-used once. This is usually true for {@code TLS1.3}.
+     */
+    boolean shouldBeSingleUse();
 
     /**
      * Set the local certificate chain that is used. It is not expected that this array will be changed at all

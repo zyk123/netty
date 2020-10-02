@@ -308,7 +308,8 @@ public class ReferenceCountedOpenSslEngine extends SSLEngine implements Referenc
     final synchronized void setupHandshakeSession() {
         OpenSslSession old = session;
         if (old.isNullSession()) {
-            session = wrapSessionIfNeeded(newOpenSslSession(SSL.getSession(ssl)));
+            // We are still in the handshake phase so always use -1 as there is "no underlying" session yet.
+            session = wrapSessionIfNeeded(newOpenSslSession(-1));
             old.release();
         }
     }
@@ -318,9 +319,9 @@ public class ReferenceCountedOpenSslEngine extends SSLEngine implements Referenc
      * The new {@link OpenSslSession} will be returned that is created (wrapping the {@code SSL_SESSION*}) and attached
      * to this engine.
      */
-    synchronized OpenSslSession sessionCreated(long sslSession) throws SSLException {
+    synchronized OpenSslSession sessionCreated(long sslSession) {
         if (isDestroyed()) {
-            throw new SSLException("Already closed");
+            return null;
         }
 
         OpenSslSession oldSession = this.session;
@@ -330,6 +331,8 @@ public class ReferenceCountedOpenSslEngine extends SSLEngine implements Referenc
         this.session = session;
         // Release the old used session
         oldSession.release();
+
+        session.upRef();
         return session;
     }
 
@@ -344,15 +347,12 @@ public class ReferenceCountedOpenSslEngine extends SSLEngine implements Referenc
             throw new SSLException("Already closed");
         }
 
-        long addr = session.nativeAddr();
-        if (addr != -1) {
-            if (SSL.setSession(ssl, addr)) {
-                session.retain();
-                OpenSslSession oldSession = this.session;
-                this.session = session;
-                oldSession.release();
-                return true;
-            }
+        if (SSL.setSession(ssl, session.nativeAddr())) {
+            session.retain();
+            OpenSslSession oldSession = this.session;
+            this.session = session;
+            oldSession.release();
+            return true;
         }
         return false;
     }
@@ -1822,12 +1822,15 @@ public class ReferenceCountedOpenSslEngine extends SSLEngine implements Referenc
 
         // if SSL_do_handshake returns > 0 or sslError == SSL.SSL_ERROR_NAME it means the handshake was finished.
         OpenSslSession oldSession = session;
+        long sslSession = SSL.getSession(ssl);
         Certificate[] local = oldSession.getLocalCertificates();
-
+        OpenSslSession session = wrapSessionIfNeeded(newOpenSslSession(sslSession));
+        if (!session.upRef()) {
+            throw new SSLHandshakeException("Unable to increment reference count of SSL_SESSION");
+        }
+        session.setLocalCertificate(local);
         try {
-            session = wrapSessionIfNeeded(newOpenSslSession(SSL.getSession(ssl)));
-            session.setLocalCertificate(local);
-
+            this.session = session;
             selectApplicationProtocol();
             calculateMaxWrapOverhead();
 
@@ -1841,7 +1844,7 @@ public class ReferenceCountedOpenSslEngine extends SSLEngine implements Referenc
     private DefaultOpenSslSession newOpenSslSession(long sslSession) {
         return parentContext.sessionContext().newOpenSslSession(sslSession, getPeerHost(), getPeerPort(),
                 SSL.getVersion(ssl), toJavaCipherSuite(SSL.getCipherForSSL(ssl)), generatePeerCertificateChain(),
-                SSL.getTime(ssl) * 1000L);
+                SSL.getTime(ssl));
     }
 
     private OpenSslJavaxX509Certificate[] generatePeerCertificateChain() {

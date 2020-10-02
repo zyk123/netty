@@ -85,33 +85,33 @@ final class OpenSslClientSessionCache extends OpenSslSessionCache {
             return;
         }
         HostPort hostPort = new HostPort(host, port);
+        final OpenSslSession session;
         synchronized (this) {
-            OpenSslSession session = sessions.get(hostPort);
-
+            session = sessions.get(hostPort);
             if (session == null) {
                 return;
             }
+            assert session.refCnt() >= 1;
             if (!session.isValid()) {
                 removeSession(session);
                 return;
             }
+        }
 
-            // Ensure the protocol and ciphersuite can be used.
-            if (!isProtocolEnabled(session, engine.getEnabledProtocols()) ||
-                    !isCipherSuiteEnabled(session, engine.getEnabledCipherSuites())) {
-                return;
+        // Ensure the protocol and ciphersuite can be used.
+        if (!isProtocolEnabled(session, engine.getEnabledProtocols()) ||
+                !isCipherSuiteEnabled(session, engine.getEnabledCipherSuites())) {
+            return;
+        }
+
+        // Try to set the session, if true is returned we retained the session and incremented the reference count
+        // of the underlying SSL_SESSION*.
+        if (engine.setSession(session)) {
+            if (session.shouldBeSingleUse()) {
+                // Should only be used once
+                session.invalidate();
             }
-
-            // Try to set the session, if true is returned we retained the session and incremented the reference count
-            // of the underlying SSL_SESSION*.
-            if (engine.setSession(session)) {
-                session.updateLastAccessedTime();
-
-                if (io.netty.internal.tcnative.SSLSession.shouldBeSingleUse(session.nativeAddr())) {
-                    // Should only be re-used once so remove it from the cache
-                    removeSession(session);
-                }
-            }
+            session.updateLastAccessedTime();
         }
     }
 

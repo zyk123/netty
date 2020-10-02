@@ -137,6 +137,11 @@ abstract class ExtendedOpenSslSession extends ExtendedSSLSession implements Open
     }
 
     @Override
+    public boolean isValid(long now) {
+        return wrapped.isValid(now);
+    }
+
+    @Override
     public final void putValue(String name, Object value) {
         if (value instanceof SSLSessionBindingListener) {
             // Decorate the value if needed so we submit the correct SSLSession instance
@@ -218,6 +223,16 @@ abstract class ExtendedOpenSslSession extends ExtendedSSLSession implements Open
     @Override
     public final int getApplicationBufferSize() {
         return wrapped.getApplicationBufferSize();
+    }
+
+    @Override
+    public boolean upRef() {
+        return wrapped.upRef();
+    }
+
+    @Override
+    public boolean shouldBeSingleUse() {
+        return wrapped.shouldBeSingleUse();
     }
 
     @Override
