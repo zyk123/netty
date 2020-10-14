@@ -31,7 +31,7 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 final class DefaultOpenSslSession extends AbstractReferenceCounted implements ReferenceCounted, OpenSslSession {
 
@@ -51,7 +51,10 @@ final class DefaultOpenSslSession extends AbstractReferenceCounted implements Re
     private volatile int packetBufferSize = ReferenceCountedOpenSslEngine.MAX_RECORD_SIZE;
     private volatile long lastAccessed;
     private volatile Certificate[] localCertificateChain;
-    private final AtomicBoolean invalid = new AtomicBoolean(false);
+
+    private static final AtomicIntegerFieldUpdater<DefaultOpenSslSession> INVALID_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(DefaultOpenSslSession.class, "invalid");
+    private volatile int invalid;
 
     // Guarded by synchronized(this)
     // lazy init for memory reasons
@@ -211,7 +214,7 @@ final class DefaultOpenSslSession extends AbstractReferenceCounted implements Re
 
     @Override
     public void invalidate() {
-        if (invalid.compareAndSet(false, true)) {
+        if (INVALID_UPDATER.compareAndSet(this, 0, 1)) {
             sessionContext.removeFromCache(this);
         }
     }
@@ -223,7 +226,7 @@ final class DefaultOpenSslSession extends AbstractReferenceCounted implements Re
 
     @Override
     public boolean isValid(long now) {
-        if (sslSession == -1 || invalid.get()) {
+        if (sslSession == -1 || INVALID_UPDATER.get(this) == 1) {
             return false;
         }
 
