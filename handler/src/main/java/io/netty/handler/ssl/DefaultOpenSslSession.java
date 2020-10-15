@@ -18,7 +18,6 @@ package io.netty.handler.ssl;
 import io.netty.internal.tcnative.SSLSession;
 import io.netty.util.AbstractReferenceCounted;
 import io.netty.util.IllegalReferenceCountException;
-import io.netty.util.ReferenceCounted;
 import io.netty.util.internal.EmptyArrays;
 import io.netty.util.internal.ObjectUtil;
 import io.netty.util.internal.StringUtil;
@@ -33,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-final class DefaultOpenSslSession extends AbstractReferenceCounted implements ReferenceCounted, OpenSslSession {
+final class DefaultOpenSslSession extends AbstractReferenceCounted implements OpenSslSession {
 
     private final OpenSslSessionContext sessionContext;
     private final String peerHost;
