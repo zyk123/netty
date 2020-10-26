@@ -5,7 +5,7 @@
  * version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *   https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -31,6 +31,8 @@
 #include "netty_unix_jni.h"
 #include "netty_unix_socket.h"
 #include "netty_unix_util.h"
+
+#define BSDSOCKET_CLASSNAME "io/netty/channel/kqueue/BsdSocket"
 
 // Those are initialized in the init(...) method and cached for performance reasons
 static jclass stringClass = NULL;
@@ -249,7 +251,7 @@ jint netty_kqueue_bsdsocket_JNI_OnLoad(JNIEnv* env, const char* packagePrefix) {
     }
     if (netty_unix_util_register_natives(env,
             packagePrefix,
-            "io/netty/channel/kqueue/BsdSocket",
+            BSDSOCKET_CLASSNAME,
             dynamicMethods,
             dynamicMethodsTableSize()) != 0) {
         goto done;
@@ -284,7 +286,9 @@ done:
     return ret;
 }
 
-void netty_kqueue_bsdsocket_JNI_OnUnLoad(JNIEnv* env) {
+void netty_kqueue_bsdsocket_JNI_OnUnLoad(JNIEnv* env, const char* packagePrefix) {
     NETTY_UNLOAD_CLASS(env, peerCredentialsClass);
     NETTY_UNLOAD_CLASS(env, stringClass);
+
+    netty_unix_util_unregister_natives(env, packagePrefix, BSDSOCKET_CLASSNAME);
 }

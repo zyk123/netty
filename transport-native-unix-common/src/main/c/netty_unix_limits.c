@@ -5,7 +5,7 @@
  * version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *   https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -20,6 +20,8 @@
 #include "netty_unix_jni.h"
 #include "netty_unix_limits.h"
 #include "netty_unix_util.h"
+
+#define LIMITS_CLASSNAME "io/netty/channel/unix/LimitsStaticallyReferencedJniMethods"
 
 // Define IOV_MAX if not found to limit the iov size on writev calls
 // See https://github.com/netty/netty/issues/2647
@@ -70,7 +72,7 @@ jint netty_unix_limits_JNI_OnLoad(JNIEnv* env, const char* packagePrefix) {
     // We must register the statically referenced methods first!
     if (netty_unix_util_register_natives(env,
             packagePrefix,
-            "io/netty/channel/unix/LimitsStaticallyReferencedJniMethods",
+            LIMITS_CLASSNAME,
             statically_referenced_fixed_method_table,
             statically_referenced_fixed_method_table_size) != 0) {
         return JNI_ERR;
@@ -79,4 +81,6 @@ jint netty_unix_limits_JNI_OnLoad(JNIEnv* env, const char* packagePrefix) {
     return NETTY_JNI_VERSION;
 }
 
-void netty_unix_limits_JNI_OnUnLoad(JNIEnv* env) { }
+void netty_unix_limits_JNI_OnUnLoad(JNIEnv* env, const char* packagePrefix) {
+    netty_unix_util_unregister_natives(env, packagePrefix, LIMITS_CLASSNAME);
+}

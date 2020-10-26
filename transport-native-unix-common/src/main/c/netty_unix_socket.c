@@ -5,7 +5,7 @@
  * version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *   https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -31,6 +31,7 @@
 #include "netty_unix_socket.h"
 #include "netty_unix_util.h"
 
+#define SOCKET_CLASSNAME "io/netty/channel/unix/Socket"
 // Define SO_REUSEPORT if not found to fix build issues.
 // See https://github.com/netty/netty/issues/2558
 #ifndef SO_REUSEPORT
@@ -539,7 +540,7 @@ static jint netty_unix_socket_disconnect(JNIEnv* env, jclass clazz, jint fd, jbo
     } while (res == -1 && ((err = errno) == EINTR));
 
     // EAFNOSUPPORT is harmless in this case.
-    // See http://www.unix.com/man-page/osx/2/connect/
+    // See https://www.unix.com/man-page/osx/2/connect/
     if (res < 0 && err != EAFNOSUPPORT) {
         return -err;
     }
@@ -1077,7 +1078,7 @@ jint netty_unix_socket_JNI_OnLoad(JNIEnv* env, const char* packagePrefix) {
     }
     if (netty_unix_util_register_natives(env,
             packagePrefix,
-            "io/netty/channel/unix/Socket",
+            SOCKET_CLASSNAME,
             dynamicMethods,
             dynamicMethodsTableSize()) != 0) {
         goto done;
@@ -1115,7 +1116,9 @@ done:
     return ret;
 }
 
-void netty_unix_socket_JNI_OnUnLoad(JNIEnv* env) {
+void netty_unix_socket_JNI_OnUnLoad(JNIEnv* env, const char* packagePrefix) {
     NETTY_UNLOAD_CLASS(env, datagramSocketAddressClass);
     NETTY_UNLOAD_CLASS(env, inetSocketAddressClass);
+
+    netty_unix_util_unregister_natives(env, packagePrefix, SOCKET_CLASSNAME);
 }

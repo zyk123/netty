@@ -5,7 +5,7 @@
  * version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *   https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -24,6 +24,8 @@
 #include "netty_unix_jni.h"
 #include "netty_unix_util.h"
 
+#define EVENT_ARRAY_CLASSNAME "io/netty/channel/kqueue/KQueueEventArray"
+
 static void netty_kqueue_eventarray_evSet(JNIEnv* env, jclass clzz, jlong keventAddress, jint ident, jshort filter, jshort flags, jint fflags) {
     EV_SET((struct kevent*) keventAddress, ident, filter, flags, fflags, 0, NULL);
 }
@@ -39,7 +41,7 @@ static const jint fixed_method_table_size = sizeof(fixed_method_table) / sizeof(
 jint netty_kqueue_eventarray_JNI_OnLoad(JNIEnv* env, const char* packagePrefix) {
     if (netty_unix_util_register_natives(env,
             packagePrefix,
-            "io/netty/channel/kqueue/KQueueEventArray",
+            EVENT_ARRAY_CLASSNAME,
             fixed_method_table,
             fixed_method_table_size) != 0) {
         return JNI_ERR;
@@ -47,5 +49,6 @@ jint netty_kqueue_eventarray_JNI_OnLoad(JNIEnv* env, const char* packagePrefix) 
     return NETTY_JNI_VERSION;
 }
 
-void netty_kqueue_eventarray_JNI_OnUnLoad(JNIEnv* env) {
+void netty_kqueue_eventarray_JNI_OnUnLoad(JNIEnv* env, const char* packagePrefix) {
+    netty_unix_util_unregister_natives(env, packagePrefix, EVENT_ARRAY_CLASSNAME);
 }
