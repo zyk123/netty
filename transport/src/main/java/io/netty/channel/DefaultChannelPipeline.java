@@ -88,7 +88,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
      * change.
      */
     private boolean registered;
-
+    //TODO:双向链表
     protected DefaultChannelPipeline(Channel channel) {
         this.channel = ObjectUtil.checkNotNull(channel, "channel");
         succeededFuture = new SucceededChannelFuture(channel, null);
@@ -200,7 +200,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
             checkMultiplicity(handler);
-
+            // TODO:对DefaultChannelPipeline进行封装
             newCtx = newContext(group, filterName(name, handler), handler);
 
             addLast0(newCtx);
@@ -821,6 +821,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline fireChannelRegistered() {
+        //TODO:->
         AbstractChannelHandlerContext.invokeChannelRegistered(head);
         return this;
     }
@@ -1378,6 +1379,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         @Override
         public void channelRegistered(ChannelHandlerContext ctx) {
             invokeHandlerAddedIfNeeded();
+            //TODO:->
             ctx.fireChannelRegistered();
         }
 

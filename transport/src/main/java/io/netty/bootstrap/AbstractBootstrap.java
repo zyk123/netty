@@ -279,7 +279,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     private ChannelFuture doBind(final SocketAddress localAddress) {
+        // TODO: 初始化注册
         final ChannelFuture regFuture = initAndRegister();
+        // TODO: 初始化注册
         final Channel channel = regFuture.channel();
         if (regFuture.cause() != null) {
             return regFuture;
@@ -291,6 +293,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             doBind0(regFuture, channel, localAddress, promise);
             return promise;
         } else {
+            // TODO: 注册失败逻辑
             // Registration future is almost always fulfilled already, but just in case it's not.
             final PendingRegistrationPromise promise = new PendingRegistrationPromise(channel);
             regFuture.addListener(new ChannelFutureListener() {
@@ -317,7 +320,10 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            //TODO:初始化ServerSocketChannel
+            //TODO:io.netty.channel.ReflectiveChannelFactory.newChannel
             channel = channelFactory.newChannel();
+            // TODO: 初始化操作
             init(channel);
         } catch (Throwable t) {
             if (channel != null) {
@@ -329,7 +335,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             // as the Channel is not registered yet we need to force the usage of the GlobalEventExecutor
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
-
+        // TODO: SeverSocketChannel注册到seletor上
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
@@ -440,6 +446,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
 
     static void setChannelOptions(
             Channel channel, Map<ChannelOption<?>, Object> options, InternalLogger logger) {
+        //TODO: 设置参数 channel.config().setOption
         for (Map.Entry<ChannelOption<?>, Object> e: options.entrySet()) {
             setChannelOption(channel, e.getKey(), e.getValue(), logger);
         }

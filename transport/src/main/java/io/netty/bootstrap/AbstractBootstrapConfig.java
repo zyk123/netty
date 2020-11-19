@@ -77,6 +77,7 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
      * Returns the configured {@link EventLoopGroup} or {@code null} if non is configured yet.
      */
     @SuppressWarnings("deprecation")
+    // TODO: bossGroup
     public final EventLoopGroup group() {
         return bootstrap.group();
     }

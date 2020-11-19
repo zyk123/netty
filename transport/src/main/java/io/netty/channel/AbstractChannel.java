@@ -79,6 +79,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      * @param parent
      *        the parent of this channel. {@code null} if there's no parent.
      */
+    //TODO: SnewChannelPipeline
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
         id = newId();
@@ -476,11 +477,12 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             AbstractChannel.this.eventLoop = eventLoop;
-
+            // TODO: 判断当前线程是不是主线程
             if (eventLoop.inEventLoop()) {
                 register0(promise);
             } else {
                 try {
+                    // TODO: 注册方法register0放到taskQueue
                     eventLoop.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -506,15 +508,18 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                //TODO:->
                 doRegister();
                 neverRegistered = false;
                 registered = true;
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
+                // TODO: 调用initChannel
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 safeSetSuccess(promise);
+
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.

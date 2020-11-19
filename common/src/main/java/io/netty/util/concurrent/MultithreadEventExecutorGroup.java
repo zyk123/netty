@@ -71,11 +71,11 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         if (nThreads <= 0) {
             throw new IllegalArgumentException(String.format("nThreads: %d (expected: > 0)", nThreads));
         }
-
+        //TODO:相当于一个线程的线程池
         if (executor == null) {
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
-
+        //TODO: NioEventLoop数组 cup*2
         children = new EventExecutor[nThreads];
 
         for (int i = 0; i < nThreads; i ++) {

@@ -72,6 +72,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
+                        //TODO:->
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;
@@ -88,8 +89,10 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 }
 
                 int size = readBuf.size();
+
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
+                    //TODO:->
                     pipeline.fireChannelRead(readBuf.get(i));
                 }
                 readBuf.clear();

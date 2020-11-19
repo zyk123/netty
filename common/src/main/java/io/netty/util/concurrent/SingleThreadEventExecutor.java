@@ -747,13 +747,15 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return isTerminated();
     }
 
+
     @Override
     public void execute(Runnable task) {
         if (task == null) {
             throw new NullPointerException("task");
         }
-
+        // TODO: 判断是否主线程
         boolean inEventLoop = inEventLoop();
+        // TODO:任务放到taskQueue
         addTask(task);
         if (!inEventLoop) {
             startThread();
@@ -863,6 +865,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         if (state == ST_NOT_STARTED) {
             if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) {
                 try {
+                    // TODO: -》
                     doStartThread();
                 } catch (Throwable cause) {
                     STATE_UPDATER.set(this, ST_NOT_STARTED);
@@ -903,6 +906,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                    // TODO: =》
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {
